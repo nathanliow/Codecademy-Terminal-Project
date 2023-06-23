@@ -1,1 +1,27 @@
-# Welcome to the portfolio project in CS 101: Introduction to Programming! # In this portfolio project, you will research, brainstorm, # and build a basic terminal program of your choice for your friends # and family to play with. After you finish building the program, # you will create a blog post to share the program on a publication of your choice! # # EXAMPLES # Blackjack # Tic-Tac-Toe # Connect Four # Battleship # Minesweeper # Who Wants to Be a Millionaire? # # Tarot Reading # NYC MetroCard Price Calculator # Mortgage Calculator # Today’s Horoscope # Your Very Own Text-Based Adventure # Project Objectives: # Build a terminal program using Python # Add at least one interactive feature using input() # Use Git version control # Use the command line and file navigation # Write a technical blog post on the project # TO DO: # think of an idea # Project brainstorming # Set up github repo # version control with git: git tracking, add and commit changes # Refactoring # write the program # blog post
+# idea:
+# Text-based adventure game with a player and enemies (LOTR / GOT themes)
+# use randint from random to generate damage numbers
+# have leveling system like rpg
+# random environments (enemy territory or village appears)
+
+from random import randint
+
+class Player:
+    def __init__(self, name="Traveler", health=100, level=1, inventory=[]):
+        self.name = name
+        self.health = health
+        self.level = level
+        self.inventory = inventory
+
+    def __repr__(self):
+        return self.name + " is level " + self.level + " and has " + self.health + " health remaining."
+
+class Enemy:
+    def __init__(self, type, health=100, level=1):
+        self.type = type
+        self.health = health
+        self.level = level
+    
+    def __repr__(self):
+        return "This " + self.type + " is level " + self.level + " and has " + self.health + " health remaining."
+
