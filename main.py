@@ -11,7 +11,6 @@
 # - finish player class rob and trade function
 # - allow villagers to help player fight or to fight player themselves
 # - figure out fighting choice from input
-# - figure out looting option
 # - allow player to go to different places instead of just going thru environment list
 
 from random import randint
@@ -34,25 +33,26 @@ class Player:
             if inventory_item.type == item.type and inventory_item.rarity == item.rarity:
                 # item already exists, update quantity
                 inventory_item.quantity += quantity
-                print("Added", quantity, inventory_item.rarity, inventory_item.type)
+                print("Added", quantity, inventory_item.rarity, inventory_item.type + "!")
                 return
         # add new item to inventory if not already present 
         item.quantity = quantity
         self.inventory.append(item)
-        print("Added", quantity, item.rarity, item.type)
+        print("Added", quantity, item.rarity, item.type + "!")
 
     def remove_item(self, item, quantity=1):
         # checks if item is in inventory
         for inventory_item in self.inventory:
-            if inventory_item.type == item:
+            if inventory_item.type == item.type and inventory_item.rarity == item.rarity:
                 inventory_item.quantity -= quantity
                 if inventory_item.quantity <= 0:
-                    print("Removed", str(inventory_item.quantity+quantity), inventory_item.rarity, inventory_item.type)
+                    print("Removed", str(inventory_item.quantity+quantity), inventory_item.rarity, inventory_item.type + "!")
                     self.inventory.remove(inventory_item)
                 else:
-                    print("Removed", quantity, inventory_item.rarity, inventory_item.type)
+                    print("Removed", quantity, inventory_item.rarity, inventory_item.type + "!")
                 return
-        print(item, "not found in the inventory.")
+        if item not in self.inventory:
+            print(inventory_item.rarity, inventory_item.type, "not found in the inventory.")
 
     def fight(self, enemy_name):
         # checks if enemy is in the active environment
@@ -84,6 +84,52 @@ class Player:
                 break
         else:
             print(villager_name, "isn't in the area!")
+
+    def loot(self):
+        if len(active_environment.item_list) > 0:
+            for item in active_environment.item_list:
+                if item.rarity == "COMMON":
+                    randnum = randint(1,100)
+                    if randnum >= 10:
+                        temp_quantity = item.quantity
+                        active_environment.remove_item(item, quantity=item.quantity)
+                        self.add_item(item, quantity=temp_quantity)
+                    else:
+                        print("You failed to loot", item.rarity, item.type, "(" + str(item.quantity) + ")!")
+                if item.rarity == "UNCOMMON":
+                    randnum = randint(1,100)
+                    if randnum >= 20:
+                        temp_quantity = item.quantity
+                        active_environment.remove_item(item, quantity=item.quantity)
+                        self.add_item(item, quantity=temp_quantity)
+                    else:
+                        print("You failed to loot", item.rarity, item.type, "(" + str(item.quantity) + ")!")
+                if item.rarity == "RARE":
+                    randnum = randint(1,100)
+                    if randnum >= 40:
+                        temp_quantity = item.quantity
+                        active_environment.remove_item(item, quantity=item.quantity)
+                        self.add_item(item, quantity=temp_quantity)
+                    else:
+                        print("You failed to loot", item.rarity, item.type, "(" + str(item.quantity) + ")!")
+                if item.rarity == "LEGENDARY":
+                    randnum = randint(1,100)
+                    if randnum >= 70:
+                        temp_quantity = item.quantity
+                        active_environment.remove_item(item, quantity=item.quantity)
+                        self.add_item(item, quantity=temp_quantity)
+                    else:
+                        print("You failed to loot", item.rarity, item.type, "(" + str(item.quantity) + ")!")
+                if item.rarity == "MYTHICAL":
+                    randnum = randint(1,100)
+                    if randnum >= 90:
+                        temp_quantity = item.quantity
+                        active_environment.remove_item(item, quantity=item.quantity)
+                        self.add_item(item, quantity=temp_quantity)
+                    else:
+                        print("You failed to loot", item.rarity, item.type, "(" + str(item.quantity) + ")!")
+        else:
+            print("There is no loot here...")
 
     def heal(self, rarity="COMMON"):
         potion_found = False
@@ -197,28 +243,50 @@ class Item:
         return "This level", str(self.level), self.rarity, self.type, "has '" + self.description + "' etched into it. You have", str(self.quantity), "of these."
 
 class Environment:
-    def __init__(self, name, level, type, description, entity_list):
+    def __init__(self, name, level, type, description, entity_list=None, item_list=None):
         self.name = name
         self.level = level
         self.type = type
         self.description = description
-        self.entity_list = entity_list
+        self.entity_list = entity_list if entity_list is not None else []
+        self.item_list = item_list if item_list is not None else []
     
     def __repr__(self):
         return self.name + " is a level " + str(self.level) + " environment. Description: " + self.description
 
     def view_entity_list(self):
         entity_list = [entity.name + " the " + entity.type + " (Level: " + str(entity.level) + ")" for entity in self.entity_list]
-        final = "Enemies: " + ", ".join(entity_list)
+        final = "Entities: " + ", ".join(entity_list)
         if entity_list:
             final = final.rstrip(", ")  # Remove the trailing comma and space
-        print(final)      
+        print(final)   
+
+    def view_item_list(self):
+        item_list = [item.rarity + " " + item.type + " (" + str(item.quantity) + ")" for item in self.item_list]
+        final = "This place contains " + ", ".join(item_list)
+        if item_list:
+            final = final.rstrip(", ")  # Remove the trailing comma and space
+        print(final)  
+
+    def remove_item(self, item, quantity=1):
+        # checks if item is in inventory
+        for env_item in self.item_list:
+            if env_item.type == item.type and env_item.rarity == item.rarity:
+                env_item.quantity -= quantity
+                if env_item.quantity <= 0:
+                    print("Removed", str(env_item.quantity+quantity), env_item.rarity, env_item.type, "from this place!")
+                    self.item_list.remove(env_item)
+                else:
+                    print("Removed", quantity, env_item.rarity, env_item.type, "from this place!")
+                return
+        if item not in self.item_list:
+            print(env_item.rarity, env_item.type, "is not here.")
 
 # -- GAME SETUP --
 environment_list = [
     Environment("Dallas", 1, "Village", "A bustling village at the center of the world, great for trading and training.", [Villager("Librarian", "Joe"), Villager("Blacksmith", "Aaron"), Villager("Magician", "John")]),
     Environment("Ogre Camp", 5, "Enemy Outpost", "A congregation of green grumpy ogres.", [Enemy("Ogre", "Eric"), Enemy("Ogre", "Eel"), Enemy("Ogre", "Erica")]),
-    Environment("Snake Dungeon", 10, "Dungeon", "A den of dangerous and venomous snakes may hold great treasures.", [Enemy("Snake", "Moma"), Enemy("Snake", "Mama"), Enemy("Snake", "Memo")]),
+    Environment("Snake Dungeon", 10, "Dungeon", "A den of dangerous and venomous snakes may hold great treasures.", [Enemy("Snake", "Moma"), Enemy("Snake", "Mama"), Enemy("Snake", "Memo")], [Item("Sword", "LEGENDARY", level=2, quantity=5), Item("Bow", "RARE", level=1, quantity=3), Item("Pickaxe", "COMMON", level=4)]),
     Environment("The Dragon's Lair", 20, "Boss Room", "ENTER AT YOUR OWN RISK...", [Enemy("Dragon", "Drakor")])
 ]
 active_environment_index = 0
@@ -254,7 +322,11 @@ elif choice == "4":
 # -- ENTERING GAME --
 while True:
     active_environment = environment_list[active_environment_index]
-    print("You are in ", active_environment.name + "!")
+    print("\nYou are in", active_environment.name + "!")
+    if len(active_environment.entity_list) > 0:
+        active_environment.view_entity_list()
+    if len(active_environment.item_list) > 0:
+        active_environment.view_item_list()
     # actions within active environment
     if active_environment.type == "Village":
         choice = input("What would you like to do? \n  (1) Train for XP \n  (2) Trade with a villager \n  (3) Leave this place\n")
@@ -324,8 +396,12 @@ while True:
             elif choice == "5":
                 player.heal("MYTHICAL")
         elif choice == "3":
-            # WIP
-            continue
+            player.loot()
+            player.view_inv()
+            if len(active_environment.item_list) > 0:
+                active_environment.view_item_list()
+            else:
+                print("This place has been fully looted...")
         elif choice == "4":
             active_environment_index = (active_environment_index + 1) % len(environment_list)
     elif active_environment.type == "Boss Room":
