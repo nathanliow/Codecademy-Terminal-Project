@@ -6,7 +6,7 @@ environment_list = [
         1, 
         "Village", 
         "A bustling village at the center of the world, great for trading and training.", 
-        [Villager("Librarian", "Joe"), Villager("Blacksmith", "Aaron"), Villager("Magician", "John")]
+        [Villager("Librarian", "Joe", inventory=[Item("Battleaxe", "COMMON", level=1, quantity=1), Item("Bow", "COMMON", level=1, quantity=1), Item("Potion", "COMMON", level=1, quantity=1)]), Villager("Blacksmith", "Aaron"), Villager("Magician", "John"), Enemy("Ogre", "EEE")]
         ),
     
     Environment(
