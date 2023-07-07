@@ -19,12 +19,12 @@ class Player:
             if inventory_item.type == item.type and inventory_item.rarity == item.rarity:
                 # item already exists, update quantity
                 inventory_item.quantity += quantity
-                print("Added", quantity, inventory_item.rarity, inventory_item.type + "!")
+                # print("Added", quantity, inventory_item.rarity, inventory_item.type + "!")
                 return
         # add new item to inventory if not already present 
         item.quantity = quantity
+        # print("Added", quantity, item.rarity, item.type + "!")
         self.inventory.append(item)
-        print("Added", quantity, item.rarity, item.type + "!")
 
     def remove_item(self, item, quantity=1):
         # checks if item is in inventory
@@ -32,48 +32,236 @@ class Player:
             if inventory_item.type == item.type and inventory_item.rarity == item.rarity:
                 inventory_item.quantity -= quantity
                 if inventory_item.quantity <= 0:
-                    print("Removed", str(inventory_item.quantity+quantity), inventory_item.rarity, inventory_item.type + "!")
+                    # print("Removed", str(inventory_item.quantity+quantity), inventory_item.rarity, inventory_item.type + "!")
                     self.inventory.remove(inventory_item)
-                else:
-                    print("Removed", quantity, inventory_item.rarity, inventory_item.type + "!")
+                # else:
+                    # print("Removed", quantity, inventory_item.rarity, inventory_item.type + "!")
                 return
         if item not in self.inventory:
             print(inventory_item.rarity, inventory_item.type, "not found in the inventory.")
 
-    # WIP
     def fight(self, enemy_name, active_environment):
         # checks if enemy is in the active environment
         for entity in active_environment.entity_list:
             if entity.name == enemy_name:
                 damage = abs((self.level + 1) - entity.level) * randint(0,50)
                 entity.health -= damage
-                print(entity.name, "the", entity.type, "was hit for", str(damage), "health! They have", str(int(entity.health)), "health left!")
                 if entity.health <= 0:
                     active_environment.entity_list.remove(entity)
+                    print(entity.name, "the", entity.type, "was hit for", str(damage), "health! They have 0 health left!")
                     print(entity.name, "the", entity.type, "has died!")
+                else:
+                    print(entity.name, "the", entity.type, "was hit for", str(damage), "health! They have", str(int(entity.health)), "health left!")
                 break
         else:
             print(enemy_name, "isn't in the area!")
 
-    # WIP
     def trade(self, villager_name, active_environment):
         for entity in active_environment.entity_list:
             if entity.name == villager_name and isinstance(entity, Villager):
-                # Trading logic
-                # print(entity.name, "the", entity.type, "was hit for", str(damage), "health! They have", str(entity.health), "health left!")
+                if len(entity.inventory) > 0:
+                    # lists out all the villager's items
+                    for i, item in enumerate(entity.inventory, start=1):
+                        print(f"({i}) {item.rarity} {item.type} ({item.quantity}) -- Value: {item.value}")
+                    # asking what item is desired
+                    want_item_num = input("What would you like to trade for?\n")
+                    while not want_item_num.isnumeric() or not int(want_item_num) <= len(entity.inventory):
+                        print("That is not a choice!")
+                        want_item_num = input("What would you like to trade for?\n")
+                    want_item = entity.inventory[int(want_item_num)-1]    
+                    # trading logic
+                    payment_method = input("How would you like to trade? \n  (1) With money \n  (2) With an item\n")
+                    while payment_method not in ["1", "2"]:
+                        print("That's not a choice!")
+                        payment_method = input("How would you like to trade? \n  (1) With money \n  (2) With an item\n")
+                    # trading with money
+                    if payment_method == "1":
+                        randnum = randint(1,10)
+                        if randnum <= 2:
+                            discount = randint(5,30)
+                            amount_paid = int(want_item.value * ((100-discount)/100))
+                            if self.money - amount_paid >= 0:
+                                self.money -= amount_paid
+                                self.add_item(want_item, quantity=want_item.quantity)
+                                entity.inventory.remove(want_item)
+                                print("You were able to bargain and buy", want_item.rarity, want_item.type, "(" + str(want_item.level) + ") for $" + str(amount_paid) + "!")
+                                print("You now have $" + str(self.money) + "!")
+                                break
+                            else:
+                                print("You don't have enough money!")
+                                break
+                        elif randnum >= 8:
+                            overcharge = randint(5,30)
+                            amount_paid = int(want_item.value * ((100+overcharge)/100))
+                            if self.money - amount_paid >= 0:
+                                self.money -= amount_paid
+                                self.add_item(want_item, quantity=want_item.quantity)
+                                entity.inventory.remove(want_item)
+                                print("You tried bargaining but", villager_name, "got mad and added more fees! You bought", want_item.rarity, want_item.type, "(" + str(want_item.level) + ") for $" + str(amount_paid) + "!")
+                                print("You now have $" + str(self.money) + "!")
+                                break
+                            else:
+                                print("You don't have enough money!")
+                                break
+                        else:
+                            amount_paid = want_item.value
+                            if self.money - amount_paid >= 0:
+                                self.money -= amount_paid
+                                self.add_item(want_item, quantity=want_item.quantity)
+                                entity.inventory.remove(want_item)
+                                print("You bought", want_item.rarity, want_item.type, "(" + str(want_item.level) + ") for $" + str(amount_paid) + "!")
+                                print("You now have $" + str(self.money) + "!")
+                                break
+                            else:
+                                print("You don't have enough money!")
+                                break
+                    # trading with player items
+                    if payment_method == "2":
+                        # lists out player items
+                        for i, item in enumerate(self.inventory, start=1):
+                            print(f"({i}) {item.rarity} {item.type} ({item.quantity}) -- Value: {item.value}")
+                        # asking what item wants to be traded away
+                        give_item_num = input("What would you like to trade away?\n")
+                        while not give_item_num.isnumeric() or not int(give_item_num) <= len(self.inventory):
+                            print("That is not a choice!")
+                            give_item_num = input("What would you like to trade away?\n")
+                        give_item = self.inventory[int(give_item_num)-1]
+                        value_diff = abs(give_item.value - want_item.value)
+                        # player item more valuable than desired item
+                        # trade success chances increase as difference in value increases
+                        if give_item.value >= want_item.value:
+                            randnum = randint(1,100)
+                            if value_diff <= 50:
+                                # trade success 50%
+                                if randnum <= 50:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                # trade fail
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            elif value_diff > 50 and value_diff <= 200:
+                                if randnum <= 65:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            elif value_diff > 200 and value_diff <= 500:
+                                if randnum <= 75:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            elif value_diff > 500 and value_diff <= 1000:
+                                if randnum <= 90:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            else:
+                                if randnum <= 95:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                        # player item less valuable than desired item
+                        # trade success chances decrease as difference in value increases
+                        elif give_item.value < want_item.value:
+                            randnum = randint(1,100)
+                            if value_diff <= 50:
+                                if randnum <= 50:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            elif value_diff > 50 and value_diff <= 200:
+                                if randnum <= 35:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            elif value_diff > 200 and value_diff <= 500:
+                                if randnum <= 25:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            elif value_diff > 500 and value_diff <= 1000:
+                                if randnum <= 10:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                            else:
+                                if randnum <= 5:
+                                    self.add_item(want_item, quantity=want_item.quantity)
+                                    entity.inventory.remove(want_item)
+                                    entity.add_item(give_item, quantity=give_item.quantity)
+                                    self.inventory.remove(give_item)
+                                    print(villager_name, "was interested in your item! You traded", give_item.rarity, give_item.type, "(" + str(give_item.level) + ") for", want_item.rarity, want_item.type, "(" + str(want_item.level) + ")!")
+                                else:
+                                    print(villager_name, "isn't interested in this item!")
+                    break
+                else:
+                    print(villager_name, "doesn't have anything to trade!")
+            elif entity.name == villager_name and not isinstance(villager_name, Villager):
+                print(villager_name, "isn't a villager!")
                 break
-            else:
-                print(villager_name, "isn't in the area!")
 
-    # WIP
     def rob(self, villager_name, active_environment):
+        rob_chances = {
+            "COMMON": 60,
+            "UNCOMMON": 40,
+            "RARE": 30,
+            "LEGENDARY": 10,
+            "MYTHICAL": 5
+        }
         for entity in active_environment.entity_list:
             if entity.name == villager_name and isinstance(entity, Villager):
-                # Robbing logic
-                # print(entity.name, "the", entity.type, "was hit for", str(damage), "health! They have", str(entity.health), "health left!")
+                if len(entity.inventory) > 0:
+                    for item in entity.inventory:
+                        if item.rarity in rob_chances:
+                            rob_chance = rob_chances[item.rarity]
+                            randnum = randint(1,100)
+                            if randnum <= rob_chance:
+                                entity.inventory.remove(item)
+                                self.add_item(item, quantity=item.quantity)
+                                print("You successfully robbed", item.rarity, item.type, "(" + str(item.quantity) + ")!")
+                            else:
+                                print("You failed to rob", item.rarity, item.type, "(" + str(item.quantity) + ")!")
+                    break
+                else:
+                    print(villager_name, "doesn't have anything!")
+            elif entity.name == villager_name and not isinstance(villager_name, Villager):
+                print(villager_name, "isn't a villager!")
                 break
-            else:
-                print(villager_name, "isn't in the area!")
+        self.view_inv()
 
     def loot(self, active_environment):
         rarity_chances = {
@@ -98,17 +286,23 @@ class Player:
 
     def add_money(self, amount):
         self.money += amount
-        print("You have gained $" + amount + "!")
+        print("You have gained $" + str(amount) + "!")
 
     def remove_money(self, amount):
         self.money -= amount
-        print("You have lost $" + amount + "!")
+        print("You have lost $" + str(amount) + "!")
+
+    def view_money(self):
+        print("You have $" + str(self.money) + "!")
 
     def heal(self, rarity="COMMON"):
         potion_found = False
         for inventory_item in self.inventory:
             if inventory_item.type == "Potion" and inventory_item.rarity == rarity:
                 inventory_item.quantity -= 1
+                if inventory_item.quantity <= 0:
+                    # print("Removed", str(inventory_item.quantity+quantity), inventory_item.rarity, inventory_item.type + "!")
+                    self.inventory.remove(inventory_item)
                 potion_found = True
                 if rarity == "COMMON":
                     # heals by 20 health
@@ -157,34 +351,28 @@ class Enemy:
         self.damage_multiplier = 1
 
         # WIP - give different characteristics to common type of enemies
-        if self.type == "Orc":
-            self.health *= 1
-            self.damage_multiplier = 0.9
-        elif self.type == "Ogre":
-            self.health *= 1.1
-            self.damage_multiplier = 1.2
-        elif self.type == "Snake":
-            self.health *= 0.5
-            self.damage_multiplier = 0.9
-        elif self.type == "Goblin":
-            self.health *= 0.25
-            self.damage_multiplier = 0.5
-        elif self.type == "Savages":
-            self.health *= 1
-            self.damage_multiplier = 1.5
-        elif self.type == "Bandits":
-            self.health *= 1
-            self.damage_multiplier = 0.5
-        elif self.type == "Dragon":
-            self.health *= 10
-            self.damage_multiplier = 10
+        enemy_characteristics = {
+            "Orc": (1, 0.9),
+            "Ogre": (1.1, 1.2),
+            "Snake": (0.5, 0.9),
+            "Goblin": (0.25, 0.5),
+            "Savages": (1, 1.5),
+            "Bandits": (1, 0.5),
+            "Dragon": (10, 10)
+        }
+
+        if self.type in enemy_characteristics:
+            self.health *= enemy_characteristics[self.type][0]
+            self.damage_multiplier = enemy_characteristics[self.type][1]
         
     def fight(self, player):
-        damage = (abs((self.level + 1) - player.level) * randint(0,50)) * self.damage_multiplier
+        damage = int((abs((self.level + 1) - player.level) * randint(0,50)) * self.damage_multiplier)
         player.health -= damage
-        print(self.name, "the", self.type, "hit you for", str(damage), "health! You have", str(int(player.health)), "health left!")
+        if player.health <= 0:
+            print(self.name, "the", self.type, "hit you for", str(damage), "health! You have 0 health left!")
+        else:
+            print(self.name, "the", self.type, "hit you for", str(damage), "health! You have", str(int(player.health)), "health left!")
 
-    
     def __repr__(self):
         return "This " + self.type + " is level " + str(self.level) + " and has " + str(self.health) + " health remaining."
 
@@ -198,7 +386,7 @@ class Villager:
         self.money = money
 
     def __repr__(self):
-        return self.name + " the " + self.type + " is level " + str(self.level) + " and has " + str(self.health) + " health remaining." + self.name + " has $" + str(self.money) + "."
+        return self.name + " the " + self.type + " is level " + str(self.level) + " and has " + str(self.health) + " health remaining. " + self.name + " has $" + str(self.money) + "."
 
     def add_money(self, amount):
         self.money += amount
@@ -208,6 +396,19 @@ class Villager:
         self.money -= amount
         print(self.name, "the", self.type, "has lost $" + amount + "!")
 
+    def add_item(self, item, quantity=1):
+        # checks if item is already in inventory
+        for inventory_item in self.inventory:
+            if inventory_item.type == item.type and inventory_item.rarity == item.rarity:
+                # item already exists, update quantity
+                inventory_item.quantity += quantity
+                # print("Added", quantity, inventory_item.rarity, inventory_item.type + "!")
+                return
+        # add new item to inventory if not already present 
+        item.quantity = quantity
+        # print("Added", quantity, item.rarity, item.type + "!")
+        self.inventory.append(item)
+
     def view_inv(self):
         item_names = [item.rarity + " " + item.type + " (" + str(item.quantity) + ")" for item in self.inventory]
         final = self.name, " has " + ", ".join(item_names)
@@ -216,13 +417,27 @@ class Villager:
         print(final)
 
 class Item:
-    def __init__(self, type, rarity="COMMON", description="It seems usable...", level=1, quantity=1, value=100):
+    def __init__(self, type, rarity="COMMON", description="It seems usable...", level=1, quantity=1):
         self.type = type
         self.rarity = rarity
         self.description = description
         self.level = level
         self.quantity = quantity
-        self.value = value
+
+        rarity_value_multiplier = {
+            "COMMON": 1,
+            "UNCOMMON": 3,
+            "RARE": 5,
+            "LEGENDARY": 10,
+            "MYTHICAL": 25
+        }
+        if self.rarity in rarity_value_multiplier:
+            if self.type == "Potion":
+                item_value = rarity_value_multiplier[self.rarity] * 100
+            else:
+                # min value = 50, max value = 4000
+                item_value = randint(50,150) * rarity_value_multiplier[self.rarity] + randint(0,250)
+        self.value = item_value
     
     def __repr__(self):
         return "This level " + str(self.level) + self.rarity, self.type + "has '" + self.description + "' etched into it. There are " + str(self.quantity) + " of these. It is worth " + str(self.value) + "."
