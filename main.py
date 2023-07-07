@@ -8,12 +8,8 @@
 # - set up a finite environment list, will make this infinite later on
 # - set up random name gen for villagers and enemies
 # - finish giving different type of enemies different characteristics
-# - finish player class rob and trade function
 # - allow villagers to help player fight or to fight player themselves
 # - allow player to go to different places instead of just going thru environment list
-
-# - fix random enemy fight player thing
-# - finish implementing worth/money for players, villagers, and items
 
 from random import *
 from classes import *
@@ -37,18 +33,22 @@ if choice == "1":
     player.add_item(Item("Sword"))
     player.add_item(Item("Potion"), 3)
     player.add_item(Item("Potion", "UNCOMMON"), 1)
+    player.add_money(1000)
 elif choice == "2":
     player.add_item(Item("Bow"))
     player.add_item(Item("Potion"), 3)
     player.add_item(Item("Potion", "UNCOMMON"), 1)
+    player.add_money(1000)
 elif choice == "3":
     player.add_item(Item("Wand"))
     player.add_item(Item("Potion"), 3)
     player.add_item(Item("Potion", "UNCOMMON"), 1)
+    player.add_money(1000)
 elif choice == "4":
     player.add_item(Item("Sledgehammer"))
     player.add_item(Item("Potion"), 3)
     player.add_item(Item("Potion", "UNCOMMON"), 1)
+    player.add_money(1000)
 
 # -- ENTERING GAME --
 while True:
@@ -62,22 +62,45 @@ while True:
     
     # actions within active environment
     if active_environment.type == "Village":
-        choice = input("What would you like to do? \n  (1) Train for XP \n  (2) Trade with a villager \n  (3) Leave this place\n")
-        while choice not in ["1", "2", "3"]:
+        choice = input("What would you like to do? \n  (1) Train for XP \n  (2) Trade with a villager \n  (3) Rob a villager \n  (4) Leave this place\n")
+        while choice not in ["1", "2", "3", "4"]:
             print("That's not a choice!")
-            choice = input("What would you like to do? \n  (1) Train for XP \n  (2) Trade with a villager \n  (3) Leave this place\n")
+            choice = input("What would you like to do? \n  (1) Train for XP \n  (2) Trade with a villager \n  (3) Rob a villager \n  (4) Leave this place\n")
         if choice == "1":
-            xp = randint(0,10)
+            xp = randint(1,25)
             player.xp += xp
+            # if player has enough xp to level up
             if player.xp >= 100:
                 player.level += 1
                 player.xp -= 100
-                print("You leveled up to level", player.level + "!")
+                print("You leveled up to level", str(player.level) + "!")
             print("You trained for several hours and got", xp, "XP!")
         elif choice == "2":
-            # WIP
-            continue
+            if len(active_environment.entity_list) > 0:
+                for i, entity in enumerate(active_environment.entity_list, start=1):
+                    print(f"({i}) {entity.name} the {entity.type} (Level: {entity.level})")
+                trade_villager_num = input("Who would you like to trade with?\n")
+                while not trade_villager_num.isnumeric() or not int(trade_villager_num) <= len(active_environment.entity_list):
+                    print("That is not a choice!")
+                    trade_villager_num = input("Who would you like to trade with?\n")
+                trade_villager = active_environment.entity_list[int(trade_villager_num)-1]
+                player.trade(trade_villager.name, active_environment)
+                player.view_inv()
+            else:
+                print("There is nobody to trade with!")
         elif choice == "3":
+            if len(active_environment.entity_list) > 0:
+                for i, entity in enumerate(active_environment.entity_list, start=1):
+                    print(f"({i}) {entity.name} the {entity.type} (Level: {entity.level})")
+                rob_villager_num = input("Who would you like to rob?\n")
+                while not rob_villager_num.isnumeric() or not int(rob_villager_num) <= len(active_environment.entity_list):
+                    print("That is not a choice!")
+                    rob_villager_num = input("Who would you like to rob?\n")
+                rob_villager = active_environment.entity_list[int(rob_villager_num)-1]
+                player.rob(rob_villager.name, active_environment)
+            else:
+                print("There is nobody to rob!")
+        elif choice == "4":
             # Move to the next environment, % ensures that the index wraps around to 0 when it reaches the end of the environment_list
             active_environment_index = (active_environment_index + 1) % len(environment_list)
     elif active_environment.type == "Enemy Outpost":
@@ -86,12 +109,20 @@ while True:
             print("That's not a choice!")
             choice = input("What would you like to do? \n  (1) Fight \n  (2) Heal \n  (3) Leave this place\n")
         if choice == "1":
-            active_environment.view_entity_list()
-            opponent = input("Who would you like to fight? (Name)\n")
-            player.fight(opponent, active_environment)
-            # WIP random choice of oppoennt to fight player isn't working
-            # opponent = random.choice(active_environment.entity_list)
-            # opponent.fight(player)
+            if len(active_environment.entity_list) > 0:
+                for i, entity in enumerate(active_environment.entity_list, start=1):
+                    print(f"({i}) {entity.name} the {entity.type} (Level: {entity.level})")
+                opponent_num = input("Who would you like to fight?\n")
+                while not opponent_num.isnumeric() or not int(opponent_num) <= len(active_environment.entity_list):
+                    print("That is not a choice!")
+                    opponent_num = input("Who would you like to fight?\n")
+                opponent = active_environment.entity_list[int(opponent_num)-1]
+                player.fight(opponent.name, active_environment)
+                opponent_list = [entity for entity in active_environment.entity_list]
+                opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
+                opponent.fight(player)
+            else:
+                print("There are no enemies!")
         elif choice == "2":
             choice = input("What rarity of potion would you like to use? \n  (1) COMMON \n  (2) UNCOMMON \n  (3) RARE \n  (4) LEGENDARY \n  (5) MYTHICAL\n")
             while choice not in ["1", "2", "3", "4", "5"]:
@@ -115,8 +146,20 @@ while True:
             print("That's not a choice!")
             choice = input("What would you like to do? \n  (1) Fight \n  (2) Heal \n  (3) Loot \n  (4) Leave this place\n")
         if choice == "1":
-            # WIP - figure out how to convert input into who to fight
-            player.fight("NULL")
+            if len(active_environment.entity_list) > 0:
+                for i, entity in enumerate(active_environment.entity_list, start=1):
+                    print(f"({i}) {entity.name} the {entity.type} (Level: {entity.level})")
+                opponent_num = input("Who would you like to fight?\n")
+                while not opponent_num.isnumeric() or not int(opponent_num) <= len(active_environment.entity_list):
+                    print("That is not a choice!")
+                    opponent_num = input("Who would you like to fight?\n")
+                opponent = active_environment.entity_list[int(opponent_num)-1]
+                player.fight(opponent.name, active_environment)
+                opponent_list = [entity for entity in active_environment.entity_list]
+                opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
+                opponent.fight(player)
+            else:
+                print("There are no enemies!")
         elif choice == "2":
             choice = input("What rarity of potion would you like to use? \n  (1) COMMON \n  (2) UNCOMMON \n  (3) RARE \n  (4) LEGENDARY \n  (5) MYTHICAL\n")
             while choice not in ["1", "2", "3", "4", "5"]:
@@ -147,8 +190,20 @@ while True:
             print("That's not a choice!")
             choice = input("What would you like to do? \n  (1) Fight \n  (2) Heal \n  (3) Leave this place\n")
         if choice == "1":
-            # WIP - figure out how to convert input into who to fight
-            player.fight("NULL")
+            if len(active_environment.entity_list) > 0:
+                for i, entity in enumerate(active_environment.entity_list, start=1):
+                    print(f"({i}) {entity.name} the {entity.type} (Level: {entity.level})")
+                opponent_num = input("Who would you like to fight?\n")
+                while not opponent_num.isnumeric() or not int(opponent_num) <= len(active_environment.entity_list):
+                    print("That is not a choice!")
+                    opponent_num = input("Who would you like to fight?\n")
+                opponent = active_environment.entity_list[int(opponent_num)-1]
+                player.fight(opponent.name, active_environment)
+                opponent_list = [entity for entity in active_environment.entity_list]
+                opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
+                opponent.fight(player)
+            else:
+                print("There are no enemies!")
         elif choice == "2":
             choice = input("What rarity of potion would you like to use? \n  (1) COMMON \n  (2) UNCOMMON \n  (3) RARE \n  (4) LEGENDARY \n  (5) MYTHICAL\n")
             while choice not in ["1", "2", "3", "4", "5"]:
