@@ -41,17 +41,38 @@ class Player:
             print(inventory_item.rarity, inventory_item.type, "not found in the inventory.")
 
     def fight(self, enemy_name, active_environment):
+        damage_multipliers = {
+            "COMMON": randint(0,50),
+            "UNCOMMON": randint(25,75),
+            "RARE": randint(75,125),
+            "LEGENDARY": randint(100,250),
+            "MYTHICAL": randint(250,500)
+        }
+        highest_rarity = "COMMON"
+        for item in self.inventory:
+            if item.rarity == "UNCOMMON" and highest_rarity in ["COMMON"] and item.type != "Potion":
+                highest_rarity = "UNCOMMON"
+            elif item.rarity == "RARE" and highest_rarity in ["COMMON", "UNCOMMON"] and item.type != "Potion":
+                highest_rarity = "RARE"
+            elif item.rarity == "LEGENDARY" and highest_rarity in ["COMMON", "UNCOMMON", "RARE"] and item.type != "Potion":
+                highest_rarity = "LEGENDARY"
+            elif item.rarity == "MYTHICAL" and highest_rarity in ["COMMON", "UNCOMMON", "RARE", "LEGENDARY"] and item.type != "Potion":
+                highest_rarity = "MYTHICAL"
+
         # checks if enemy is in the active environment
         for entity in active_environment.entity_list:
             if entity.name == enemy_name:
-                damage = abs((self.level + 1) - entity.level) * randint(0,50)
+                if self.level > entity.level:
+                    damage = abs((self.level + 1) - entity.level) * damage_multipliers[highest_rarity]
+                else:
+                    damage = abs((self.level + 1)) * damage_multipliers[highest_rarity]
                 entity.health -= damage
                 if entity.health <= 0:
                     active_environment.entity_list.remove(entity)
-                    print(entity.name, "the", entity.type, "was hit for", str(damage), "health! They have 0 health left!")
+                    print(entity.name, "the", entity.type, "was hit for", str(damage), "health using a", highest_rarity, "item! They have 0 health left!")
                     print(entity.name, "the", entity.type, "has died!")
                 else:
-                    print(entity.name, "the", entity.type, "was hit for", str(damage), "health! They have", str(int(entity.health)), "health left!")
+                    print(entity.name, "the", entity.type, "was hit for", str(damage), "health using a", highest_rarity, "item! They have", str(int(entity.health)), "health left!")
                 break
         else:
             print(enemy_name, "isn't in the area!")
@@ -244,6 +265,15 @@ class Player:
         }
         for entity in active_environment.entity_list:
             if entity.name == villager_name and isinstance(entity, Villager):
+                # stealing money from villager
+                if entity.money > 0:
+                    money_stolen = randint(0, entity.money)
+                    entity.money -= money_stolen
+                    self.money += money_stolen
+                    print("You managed to steal $" + str(money_stolen) + "!")
+                else:
+                    print(entity.name, "has no money!")
+                # stealing items from villager
                 if len(entity.inventory) > 0:
                     for item in entity.inventory:
                         if item.rarity in rob_chances:
@@ -354,10 +384,12 @@ class Enemy:
         enemy_characteristics = {
             "Orc": (1, 0.9),
             "Ogre": (1.1, 1.2),
+            "Golem": (3, 0.6),
             "Snake": (0.5, 0.9),
             "Goblin": (0.25, 0.5),
-            "Savages": (1, 1.5),
-            "Bandits": (1, 0.5),
+            "Savage": (1, 1.5),
+            "Bandit": (1, 0.5),
+            "Ravager": (0.8, 0.4),
             "Dragon": (10, 10)
         }
 
@@ -474,10 +506,10 @@ class Environment:
             if env_item.type == item.type and env_item.rarity == item.rarity:
                 env_item.quantity -= quantity
                 if env_item.quantity <= 0:
-                    print("Removed", str(env_item.quantity+quantity), env_item.rarity, env_item.type, "from this place!")
+                    # print("Removed", str(env_item.quantity+quantity), env_item.rarity, env_item.type, "from this place!")
                     self.item_list.remove(env_item)
-                else:
-                    print("Removed", quantity, env_item.rarity, env_item.type, "from this place!")
+                # else:
+                    # print("Removed", quantity, env_item.rarity, env_item.type, "from this place!")
                 return
         if item not in self.item_list:
             print(env_item.rarity, env_item.type, "is not here.")
