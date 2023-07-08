@@ -1,16 +1,3 @@
-# idea:
-# Text-based adventure game with a player and enemies (LOTR / GOT themes)
-# use randint from random to generate damage numbers
-# have leveling system like rpg
-# random environments (enemy territory or village appears)
-
-# To Do: (7-5-23)
-# - set up a finite environment list, will make this infinite later on
-# - set up random name gen for villagers and enemies
-# - finish giving different type of enemies different characteristics
-# - allow villagers to help player fight or to fight player themselves
-# - allow player to go to different places instead of just going thru environment list
-
 from random import *
 from classes import *
 from environments import *
@@ -67,7 +54,7 @@ while True:
             print("That's not a choice!")
             choice = input("What would you like to do? \n  (1) Train for XP \n  (2) Trade with a villager \n  (3) Rob a villager \n  (4) Leave this place\n")
         if choice == "1":
-            xp = randint(1,25)
+            xp = randint(25,50)
             player.xp += xp
             # if player has enough xp to level up
             if player.xp >= 100:
@@ -119,8 +106,11 @@ while True:
                 opponent = active_environment.entity_list[int(opponent_num)-1]
                 player.fight(opponent.name, active_environment)
                 opponent_list = [entity for entity in active_environment.entity_list]
-                opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
-                opponent.fight(player)
+                if len(opponent_list) > 0:
+                    opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
+                    opponent.fight(player)
+                else:
+                    print("There are no enemies!")
             else:
                 print("There are no enemies!")
         elif choice == "2":
@@ -156,8 +146,11 @@ while True:
                 opponent = active_environment.entity_list[int(opponent_num)-1]
                 player.fight(opponent.name, active_environment)
                 opponent_list = [entity for entity in active_environment.entity_list]
-                opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
-                opponent.fight(player)
+                if len(opponent_list) > 0:
+                    opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
+                    opponent.fight(player)
+                else:
+                    print("There are no enemies!")
             else:
                 print("There are no enemies!")
         elif choice == "2":
@@ -200,8 +193,11 @@ while True:
                 opponent = active_environment.entity_list[int(opponent_num)-1]
                 player.fight(opponent.name, active_environment)
                 opponent_list = [entity for entity in active_environment.entity_list]
-                opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
-                opponent.fight(player)
+                if len(opponent_list) > 0:
+                    opponent = opponent_list[randint(0,len(active_environment.entity_list)-1)]
+                    opponent.fight(player)
+                else:
+                    print("There are no enemies!")
             else:
                 print("There are no enemies!")
         elif choice == "2":
